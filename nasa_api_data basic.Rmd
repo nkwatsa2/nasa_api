@@ -1,0 +1,56 @@
+---
+title: "api_NASA"
+author: "Aggie"
+date: "12/21/2020"
+output: html_document
+---
+
+NASA API thingy data
+
+location of space station and how many people are currently in space
+
+first: how many people in space
+
+```{r}
+library(httr)
+people_api_data <- GET("http://api.open-notify.org/astros.json") # output is a list with info retruned by api server
+people_api_data
+people_content <- content(people_api_data)
+people_content # returns list of 3
+```
+
+In its current state, the data in the people_api_data variable is not usable. The actual data is contained as raw Unicode in the people_api_data list, which ultimately needs to be converted into JSON format.
+
+```{r}
+# rawToChar(people_api_data$content) # converting first to character vector
+people_data <- jsonlite::fromJSON(rawToChar(people_api_data$content))
+people_data$people
+```
+
+Answer: there is currently 7 people in space
+
+
+
+### what if we want to know when the intl space station will pass over a certain location? OR its current location?
+
+```{r}
+location_ISS  <- GET("http://api.open-notify.org/iss-now.json")
+location <- content(location_ISS)
+location$iss_position
+location$timestamp # time is in unix time
+```
+
+finding out when the ISS will be passing over the Brooklyn Bridge (which is at roughly latitude 40.7, longitude: -74)
+
+
+Open Notify’s ISS Pass Times API requires us to provide additional parameters before it can return the data we want.
+
+Specifically, we'll need to specify the latitude and longitude of the location we're asking about as part of our GET() request. Once a latitude and longitude are specified, they are combined with the original URL as query parameters.
+
+```{r}
+specific_location <- GET("http://api.open-notify.org/iss-pass.json",
+                         query = list(lat = 40.7, lon = -74))
+
+spec_location <- jsonlite::fromJSON(rawToChar(specific_location$content))
+spec_location$response
+```
